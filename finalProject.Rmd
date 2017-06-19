@@ -1,0 +1,121 @@
+---
+title: "Twitter Celebrities Tweets Task"
+autor: "Tal Waitzenberg and Lital Moali"
+date: "June 18, 2017"
+---
+#The Task
+We have chosen the third task
+**Our Goal:** : Modeling Twitter celebrity tweets and creating new tweets by using this model.
+#Data collection:
+We have collected data from twitter using twitter search's API. 
+The data we have collected was 179 tweets for 5 particular celebrities, we were using access tokens that allows collecting this data by permissions.
+
+##c. Data collection documentation:    
+c.1) Install and Activate Packages
+```{r}
+folder = 'C:/Users/talon/Desktop/shitot/FinalProject'
+setwd(folder)
+#install.packages("twitteR")
+#install.packages("RJSONIO")
+#install.packages("RCurl")
+#install.packages("stringr")
+library(twitteR)
+library(RCurl)
+library(RJSONIO)
+library(stringr)
+```
+
+c.2) Declare Twitter API Credentials
+```{r}
+api_key <- "API KEY" # From dev.twitter.com
+api_secret <- "API Secret" # From dev.twitter.com
+token <- "Access token" # From dev.twitter.com
+token_secret <- "Access token secret" # From dev.twitter.com
+```
+
+```{r}
+api_key <- "IaBTQDeaXUeoeZJyP7IJcNmad"
+api_secret <- "fYtrsLGr62x1JREaHrTZUOdmB2unNNVAM6KqY4aivOR8VMN7EG"
+token <- "876433937958133760-bdNHlxWk1DSwcDlUyTbkLBatGrdSITv"
+token_secret <- "wKaMWm0K5cybr3vtN0rgbWgNQtPUhdAg4YCYY6ERN7ov0"
+```
+
+c.3) Create Twitter Connection
+```{r}
+setup_twitter_oauth(api_key, api_secret, token, token_secret)
+```
+
+c.4) Run Twitter Search for the celebrities: Donald J. Trump, Kim Kardashian West, Kent Beck, Bill Gates, Katy Perry
+```{r}
+TrumpTweets <- searchTwitter("from:realDonaldTrump", n=50, lang="en")
+KimKardashianTweets <- searchTwitter("from:KimKardashian", n=50, lang="en")
+KentBecktweets <- searchTwitter("from:KentBeck", n=50, lang="en")
+BillGatesTweets <- searchTwitter("from:BillGates", n=50, lang="en")
+katyperryTweets <- searchTwitter("from:katyperry", n=50, lang="en")
+allTweets <- c(TrumpTweets, KimKardashianTweets, KentBecktweets, BillGatesTweets, katyperryTweets)
+allTweets.df <- twListToDF(allTweets)
+```
+
+c.5) Write the tweets to csv file
+```{r}
+write.csv(allTweets.df, file = "AllTweets.csv")
+```
+
+c.6) Read celebrities tweets from the csv file:
+```{r}
+tweets <- read.csv('AllTweets.csv', header = T)
+tweets
+```
+
+c.7) Analizing the data
+A quick summary of the new calculated features:
+```{r}
+summary(tweets)
+```
+Therefore we have chosen the following features:
+```{r}
+tweetsFeatures.df <- allTweets.df[c('text', 'favoriteCount', 'created', 'replyToSN', 'replyToSID', 'id', 'replyToUID', 'screenName', 'retweetCount')]
+```
+
+##Feature Engineering
+Now we will add some calculated features
+```{r}
+#Number of characters per tweet
+tweetsFeatures.df$text_length<- apply(tweetsFeatures.df, 1, function(x) nchar(x['text']))
+#Number of words per tweet
+nword <- function(str) { sapply(gregexpr("\\W+", str), length) + 1 }  
+tweetsFeatures.df$number_of_word <- apply(tweetsFeatures.df, 1, function(x) nword(x['text']))
+```
+
+A quick summary of the new calculated features:
+```{r}
+summary(tweetsFeatures.df[,c('text_length','number_of_word')])
+
+```
+
+Visualize numeric features:
+
+```{r}
+trump <- subset(tweetsFeatures.df,screenName=='realDonaldTrump')
+KimKardashian <- subset(tweetsFeatures.df,screenName=='KimKardashian')
+KentBeck <- subset(tweetsFeatures.df,screenName=='KentBeck')
+BillGates <- subset(tweetsFeatures.df,screenName=='BillGates')
+katyperry <- subset(tweetsFeatures.df,screenName=='katyperry')
+
+
+hist(trump$number_of_word,col='green',breaks=30,main='Donald Trump',xlab ='number of words' )
+abline(v=median(trump$number_of_word),lwd=4)
+
+hist(KimKardashian$number_of_word,col='red',breaks=30,main='Kim Kardashian',xlab ='number of words' )
+abline(v=median(KimKardashian$number_of_word),lwd=4)
+
+hist(KentBeck$number_of_word,col='blue',breaks=30,main='Kent Beck',xlab ='number of words' )
+abline(v=median(KentBeck$number_of_word),lwd=4)
+
+hist(BillGates$number_of_word,col='yellow',breaks=30,main='Bill Gates',xlab ='number of words' )
+abline(v=median(BillGates$number_of_word),lwd=4)
+
+hist(katyperry$number_of_word,col='orange',breaks=30,main='Katy Perry',xlab ='number of words' )
+abline(v=median(katyperry$number_of_word),lwd=4)
+```
+
